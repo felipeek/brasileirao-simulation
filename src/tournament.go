@@ -10,7 +10,9 @@ type Round struct {
 }
 
 type Schedule struct {
-	rounds []*Round
+	nextRoundIdx int
+	finished     bool
+	rounds       []*Round
 }
 
 func GenerateSchedule(teams map[string]Team) (Schedule, error) {
@@ -20,6 +22,9 @@ func GenerateSchedule(teams map[string]Team) (Schedule, error) {
 
 	schedule := Schedule{}
 	roundRobinTeams := []string{}
+
+	schedule.nextRoundIdx = 0
+	schedule.finished = false
 
 	// Create a slice containing all available teams
 	// It will be used to construct the schedule
@@ -115,21 +120,57 @@ func GenerateSchedule(teams map[string]Team) (Schedule, error) {
 	return schedule, nil
 }
 
+func (r *Round) PlayFixturesOfRound() {
+	for _, fixture := range r.fixtures {
+		fixture.Play()
+	}
+}
+
 func (s *Schedule) PlayAllFixtures() {
 	for _, round := range s.rounds {
 		for _, fixture := range round.fixtures {
-			fixture.Play()
+			if !fixture.played {
+				fixture.Play()
+			}
 		}
+	}
+
+	s.nextRoundIdx = -1
+	s.finished = true
+}
+
+func (s *Schedule) PlayNextRoundFixtures() {
+	if s.finished {
+		return
+	}
+
+	round := s.rounds[s.nextRoundIdx]
+	round.PlayFixturesOfRound()
+	s.nextRoundIdx += 1
+	if s.nextRoundIdx == len(s.rounds) {
+		s.nextRoundIdx = -1
+		s.finished = true
+	}
+}
+
+func (r *Round) Print() {
+	for _, fixture := range r.fixtures {
+		fmt.Printf("\t%s %d x %d %s\n", fixture.homeTeam, fixture.homeTeamScore, fixture.awayTeamScore, fixture.awayTeam)
 	}
 }
 
 func (s *Schedule) Print() {
-	fmt.Println("Schedule")
-
 	for i, round := range s.rounds {
-		fmt.Printf("\tRound [%d]\n", i+1)
-		for _, fixture := range round.fixtures {
-			fmt.Printf("\t\t%s %d x %d %s\n", fixture.homeTeam, fixture.homeTeamScore, fixture.awayTeamScore, fixture.awayTeam)
-		}
+		fmt.Printf("Round [%d]\n", i+1)
+		round.Print()
+	}
+}
+
+func (s *Schedule) PrintLastPlayedRound() {
+	lastPlayedRoundIdx := s.nextRoundIdx - 1
+	fmt.Printf("Round [%d]\n", lastPlayedRoundIdx+1)
+	if lastPlayedRoundIdx >= 0 {
+		round := s.rounds[lastPlayedRoundIdx]
+		round.Print()
 	}
 }

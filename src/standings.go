@@ -33,6 +33,9 @@ func GenerateStandings(s *Schedule) Standings {
 
 	for _, round := range s.rounds {
 		for _, fixture := range round.fixtures {
+			if !fixture.played {
+				continue
+			}
 			homeTeamStatistics := standingsMap[fixture.homeTeam]
 			awayTeamStatistics := standingsMap[fixture.awayTeam]
 

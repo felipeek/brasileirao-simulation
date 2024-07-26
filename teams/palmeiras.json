@@ -2,5 +2,6 @@
     "Name": "Palmeiras",
     "Attack": 7,
     "Midfield": 8,
-    "Defense": 7
+    "Defense": 7,
+	"HomeFactor": 8
 }

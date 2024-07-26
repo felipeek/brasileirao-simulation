@@ -2,5 +2,6 @@
     "Name": "Botafogo",
     "Attack": 7,
     "Midfield": 7,
-    "Defense": 7
+    "Defense": 7,
+	"HomeFactor": 5
 }

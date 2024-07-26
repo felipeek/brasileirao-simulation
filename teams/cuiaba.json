@@ -2,5 +2,6 @@
     "Name": "Cuiaba",
     "Attack": 5,
     "Midfield": 4,
-    "Defense": 4
+    "Defense": 4,
+	"HomeFactor": 4
 }

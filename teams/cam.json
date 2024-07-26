@@ -2,5 +2,6 @@
     "Name": "Atletico-MG",
     "Attack": 8,
     "Midfield": 7,
-    "Defense": 6
+    "Defense": 6,
+	"HomeFactor": 7
 }

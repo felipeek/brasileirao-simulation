@@ -7,10 +7,11 @@ import (
 )
 
 type Team struct {
-	Name     string
-	Attack   int64
-	Midfield int64
-	Defense  int64
+	Name       string
+	Attack     float64
+	Midfield   float64
+	Defense    float64
+	HomeFactor float64
 }
 
 const (

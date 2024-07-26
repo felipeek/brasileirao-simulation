@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 )
@@ -14,19 +15,39 @@ type Fixture struct {
 }
 
 const (
-	LOG_ADJUST_FACTOR = 10 // the bigger, the more 'balanced' the results
-	BONUS_HOME        = 1.3
+	LOG_ADJUST_FACTOR = 0.5 // the smaller, the more 'balanced' the results
+	BONUS_HOME        = 2.0
 )
 
 func (f *Fixture) Play() {
 	homeTeam := TeamsGetWithName(f.homeTeam)
 	awayTeam := TeamsGetWithName(f.awayTeam)
 
-	homeLambda := BONUS_HOME * (1.5*float64(homeTeam.Attack) - float64(awayTeam.Defense) + 0.5*(float64(homeTeam.Midfield)-float64(awayTeam.Midfield)))
-	awayLambda := 1.5*float64(awayTeam.Attack) - float64(homeTeam.Defense) + 0.5*(float64(awayTeam.Midfield)-float64(homeTeam.Midfield))
+	// Additional strength given to the home team (home factor)
+	homeStadiumStrength := BONUS_HOME * (float64(homeTeam.HomeFactor) / 10)
 
-	f.homeTeamScore = MaxInt64(0, poissonKnuth(CustomLog(homeLambda)))
-	f.awayTeamScore = MaxInt64(0, poissonKnuth(CustomLog(awayLambda)))
+	// Home team strength factors
+	homeAttackStrength := 1.5*homeTeam.Attack + homeTeam.Midfield
+	homeDefenseStrength := 1.5*homeTeam.Defense + homeTeam.Midfield
+
+	// Away team strength factors
+	awayDefenseStrength := 1.5*awayTeam.Defense + awayTeam.Midfield
+	awayAttackStrength := 1.5*awayTeam.Attack + awayTeam.Midfield
+
+	// Final non-attentuated strength of each team for this match
+	homeStrength := homeStadiumStrength * (homeAttackStrength / (1 + awayDefenseStrength/homeAttackStrength))
+	awayStrength := awayAttackStrength / (1 + homeDefenseStrength/awayAttackStrength)
+
+	// Attenuate strengths by employing a log-based function
+	homeLambda := attenuateStrength(homeStrength)
+	awayLambda := attenuateStrength(awayStrength)
+
+	// Generate final scores based on a poisson distribution
+	f.homeTeamScore = poissonKnuth(homeLambda)
+	f.awayTeamScore = poissonKnuth(awayLambda)
+
+	fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeLambda, homeLambda)
+	fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayLambda, awayLambda)
 
 	f.played = true
 }
@@ -46,11 +67,9 @@ func poissonKnuth(lambda float64) int64 {
 	return k - 1
 }
 
-func CustomLog(x float64) float64 {
+func attenuateStrength(x float64) float64 {
 	if x <= 0 {
-		// Logarithm not defined for non-positive values
-		return math.NaN() // Returns "not a number"
+		return 0
 	}
-	// Calculate 0.5 * log_base(sqrt(5)) of x + 1
-	return 0.5*math.Log(x)/math.Log(LOG_ADJUST_FACTOR) + 1
+	return math.Log(1 + LOG_ADJUST_FACTOR*x)
 }

@@ -2,5 +2,6 @@
     "Name": "Bahia",
     "Attack": 6,
     "Midfield": 7,
-    "Defense": 7
+    "Defense": 7,
+	"HomeFactor": 5
 }

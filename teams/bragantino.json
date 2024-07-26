@@ -1,7 +1,7 @@
 {
-    "Name": "Bragantino",
-    "Attack": 6,
-    "Midfield": 6,
-    "Defense": 6,
+	"Name": "Bragantino",
+	"Attack": 6,
+	"Midfield": 6,
+	"Defense": 6,
 	"HomeFactor": 5
 }

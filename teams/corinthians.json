@@ -1,7 +1,7 @@
 {
-    "Name": "Corinthians",
-    "Attack": 2,
-    "Midfield": 4,
-    "Defense": 4,
+	"Name": "Corinthians",
+	"Attack": 2,
+	"Midfield": 4,
+	"Defense": 4,
 	"HomeFactor": 8
 }

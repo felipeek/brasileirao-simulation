@@ -1,7 +1,7 @@
 {
-    "Name": "Criciuma",
-    "Attack": 4,
-    "Midfield": 5,
-    "Defense": 5,
+	"Name": "Criciuma",
+	"Attack": 4,
+	"Midfield": 5,
+	"Defense": 5,
 	"HomeFactor": 5
 }

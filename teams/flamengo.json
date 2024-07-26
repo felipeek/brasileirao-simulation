@@ -1,7 +1,7 @@
 {
-    "Name": "Flamengo",
-    "Attack": 8,
-    "Midfield": 8,
-    "Defense": 6,
+	"Name": "Flamengo",
+	"Attack": 8,
+	"Midfield": 8,
+	"Defense": 6,
 	"HomeFactor": 8
 }

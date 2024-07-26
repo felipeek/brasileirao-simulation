@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 )
@@ -23,7 +24,7 @@ func (f *Fixture) Play() {
 	awayTeam := TeamsGetWithName(f.awayTeam)
 
 	// Additional strength given to the home team (home factor)
-	homeStadiumStrength := BONUS_HOME * (float64(homeTeam.HomeFactor) / 10)
+	homeStadiumStrength := BONUS_HOME * (homeTeam.HomeFactor / 10)
 
 	// Home team strength factors
 	homeAttackStrength := 1.5*homeTeam.Attack + homeTeam.Midfield
@@ -45,14 +46,18 @@ func (f *Fixture) Play() {
 	f.homeTeamScore = poissonKnuth(homeLambda)
 	f.awayTeamScore = poissonKnuth(awayLambda)
 
-	//fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeLambda, homeLambda)
-	//fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayLambda, awayLambda)
+	fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeLambda, homeLambda)
+	fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayLambda, awayLambda)
 
 	f.played = true
 }
 
 // https://www.johndcook.com/blog/2010/06/14/generating-poisson-random-values/
 func poissonKnuth(lambda float64) int {
+	if lambda <= 0 {
+		return 0
+	}
+
 	L := math.Exp(-lambda)
 	k := int(0)
 	p := 1.0

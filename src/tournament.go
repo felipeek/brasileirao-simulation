@@ -10,9 +10,10 @@ type Round struct {
 }
 
 type Schedule struct {
-	nextRoundIdx int
-	finished     bool
-	rounds       []*Round
+	currentRoundIdx int
+	nextRoundIdx    int
+	finished        bool
+	rounds          []*Round
 }
 
 func GenerateSchedule(teams map[string]Team) (Schedule, error) {
@@ -23,6 +24,7 @@ func GenerateSchedule(teams map[string]Team) (Schedule, error) {
 	schedule := Schedule{}
 	roundRobinTeams := []string{}
 
+	schedule.currentRoundIdx = -1
 	schedule.nextRoundIdx = 0
 	schedule.finished = false
 
@@ -135,6 +137,7 @@ func (s *Schedule) PlayAllFixtures() {
 		}
 	}
 
+	s.currentRoundIdx = len(s.rounds) - 1
 	s.nextRoundIdx = -1
 	s.finished = true
 }
@@ -146,6 +149,7 @@ func (s *Schedule) PlayNextRoundFixtures() {
 
 	round := s.rounds[s.nextRoundIdx]
 	round.PlayFixturesOfRound()
+	s.currentRoundIdx += 1
 	s.nextRoundIdx += 1
 	if s.nextRoundIdx == len(s.rounds) {
 		s.nextRoundIdx = -1
@@ -167,10 +171,9 @@ func (s *Schedule) Print() {
 }
 
 func (s *Schedule) PrintLastPlayedRound() {
-	lastPlayedRoundIdx := s.nextRoundIdx - 1
-	fmt.Printf("Round [%d]\n", lastPlayedRoundIdx+1)
-	if lastPlayedRoundIdx >= 0 {
-		round := s.rounds[lastPlayedRoundIdx]
+	if s.currentRoundIdx >= 0 {
+		fmt.Printf("Round [%d]\n", s.currentRoundIdx+1)
+		round := s.rounds[s.currentRoundIdx]
 		round.Print()
 	}
 }

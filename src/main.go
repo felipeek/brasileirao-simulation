@@ -45,6 +45,13 @@ func PlayAllFixturesIteractive(s *Schedule) {
 
 		standings := GenerateStandings(s)
 		standings.Print()
+
+		if s.finished {
+			fmt.Println()
+			fmt.Printf("##################################################################\n")
+			fmt.Printf("The champion: [%s]!\n", standings.TeamStatistics[0].Name)
+			fmt.Printf("##################################################################\n")
+		}
 	}
 
 }

@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 )
 
 type TeamStatistic struct {
 	Name         string
-	Matches      int64
-	Points       int64
-	Won          int64
-	Drawn        int64
-	Lost         int64
-	GoalsFor     int64
-	GoalsAgainst int64
-	GoalsDiff    int64
+	Matches      int
+	Points       int
+	Won          int
+	Drawn        int
+	Lost         int
+	GoalsFor     int
+	GoalsAgainst int
+	GoalsDiff    int
 }
 
 type Standings struct {
@@ -71,8 +72,36 @@ func GenerateStandings(s *Schedule) Standings {
 	}
 
 	sort.Slice(teamStatistics, func(i, j int) bool {
-		// todo if points == points, consider wins/goals
-		return teamStatistics[i].Points > teamStatistics[j].Points
+		pointsDiff := teamStatistics[i].Points - teamStatistics[j].Points
+		if pointsDiff > 0 {
+			return true
+		} else if pointsDiff < 0 {
+			return false
+		}
+
+		goalsDiff := teamStatistics[i].GoalsDiff - teamStatistics[j].GoalsDiff
+		if goalsDiff > 0 {
+			return true
+		} else if goalsDiff < 0 {
+			return false
+		}
+
+		goalsForDiff := teamStatistics[i].GoalsFor - teamStatistics[j].GoalsFor
+		if goalsForDiff > 0 {
+			return true
+		} else if goalsForDiff < 0 {
+			return false
+		}
+
+		iScore, jScore := summedH2HResults(s, teamStatistics[i].Name, teamStatistics[j].Name)
+		h2hDiff := iScore - jScore
+		if h2hDiff > 0 {
+			return true
+		} else if h2hDiff < 0 {
+			return false
+		}
+
+		return rand.Int()%2 == 0
 	})
 
 	standings := Standings{}
@@ -88,4 +117,23 @@ func (s *Standings) Print() {
 	for i, team := range s.TeamStatistics {
 		fmt.Printf(dataFormat, i+1, team.Name, team.Matches, team.Points, team.Won, team.Drawn, team.Lost, team.GoalsFor, team.GoalsAgainst, team.GoalsDiff)
 	}
+}
+
+func summedH2HResults(s *Schedule, team1Name string, team2Name string) (int, int) {
+	team1SummedScore := 0
+	team2SummedScore := 0
+
+	for _, r := range s.rounds {
+		for _, f := range r.fixtures {
+			if f.played && f.homeTeam == team1Name && f.awayTeam == team2Name {
+				team1SummedScore += f.homeTeamScore
+				team2SummedScore += f.awayTeamScore
+			} else if f.played && f.homeTeam == team2Name && f.awayTeam == team1Name {
+				team2SummedScore += f.homeTeamScore
+				team1SummedScore += f.awayTeamScore
+			}
+		}
+	}
+
+	return team1SummedScore, team2SummedScore
 }

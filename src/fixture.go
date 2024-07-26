@@ -8,8 +8,8 @@ import (
 type Fixture struct {
 	homeTeam      string
 	awayTeam      string
-	homeTeamScore int64
-	awayTeamScore int64
+	homeTeamScore int
+	awayTeamScore int
 	played        bool
 }
 
@@ -52,9 +52,9 @@ func (f *Fixture) Play() {
 }
 
 // https://www.johndcook.com/blog/2010/06/14/generating-poisson-random-values/
-func poissonKnuth(lambda float64) int64 {
+func poissonKnuth(lambda float64) int {
 	L := math.Exp(-lambda)
-	k := int64(0)
+	k := int(0)
 	p := 1.0
 
 	for p > L {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 )
@@ -46,8 +45,8 @@ func (f *Fixture) Play() {
 	f.homeTeamScore = poissonKnuth(homeLambda)
 	f.awayTeamScore = poissonKnuth(awayLambda)
 
-	fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeLambda, homeLambda)
-	fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayLambda, awayLambda)
+	//fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeLambda, homeLambda)
+	//fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayLambda, awayLambda)
 
 	f.played = true
 }

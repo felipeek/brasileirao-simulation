@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"slices"
 )
 
 type Round struct {
@@ -122,17 +123,31 @@ func GenerateSchedule(teams map[string]Team) (Schedule, error) {
 	return schedule, nil
 }
 
-func (r *Round) PlayFixturesOfRound() {
+func (r *Round) PlayFixturesOfRound(lastRounds []*Round) error {
 	for _, fixture := range r.fixtures {
-		fixture.Play()
+		homeTeamLastFixtures := getTeamLastFixtures(fixture.homeTeam, lastRounds)
+		awayTeamLastFixtures := getTeamLastFixtures(fixture.awayTeam, lastRounds)
+		err := fixture.Play(homeTeamLastFixtures, awayTeamLastFixtures)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (s *Schedule) PlayAllFixtures() {
+func (s *Schedule) PlayAllFixtures() error {
 	for _, round := range s.rounds {
+		playedRounds := s.getPlayedRounds()
+
 		for _, fixture := range round.fixtures {
 			if !fixture.played {
-				fixture.Play()
+				homeTeamLastFixtures := getTeamLastFixtures(fixture.homeTeam, playedRounds)
+				awayTeamLastFixtures := getTeamLastFixtures(fixture.awayTeam, playedRounds)
+				err := fixture.Play(homeTeamLastFixtures, awayTeamLastFixtures)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -140,21 +155,27 @@ func (s *Schedule) PlayAllFixtures() {
 	s.currentRoundIdx = len(s.rounds) - 1
 	s.nextRoundIdx = -1
 	s.finished = true
+	return nil
 }
 
-func (s *Schedule) PlayNextRoundFixtures() {
+func (s *Schedule) PlayNextRoundFixtures() error {
 	if s.finished {
-		return
+		return nil
 	}
 
 	round := s.rounds[s.nextRoundIdx]
-	round.PlayFixturesOfRound()
+	err := round.PlayFixturesOfRound(s.getPlayedRounds())
+	if err != nil {
+		return err
+	}
+
 	s.currentRoundIdx += 1
 	s.nextRoundIdx += 1
 	if s.nextRoundIdx == len(s.rounds) {
 		s.nextRoundIdx = -1
 		s.finished = true
 	}
+	return nil
 }
 
 func (r *Round) Print() {
@@ -176,4 +197,33 @@ func (s *Schedule) PrintLastPlayedRound() {
 		round := s.rounds[s.currentRoundIdx]
 		round.Print()
 	}
+}
+
+func getTeamLastFixtures(teamName string, lastRounds []*Round) []Fixture {
+	lastFixtures := []Fixture{}
+	for _, r := range lastRounds {
+		for _, f := range r.fixtures {
+			if f.homeTeam == teamName || f.awayTeam == teamName {
+				lastFixtures = append(lastFixtures, *f)
+				break
+			}
+		}
+	}
+
+	return lastFixtures
+}
+
+func (s *Schedule) getPlayedRounds() []*Round {
+	if s.currentRoundIdx < 0 {
+		return []*Round{}
+	}
+
+	// Create a new slice to avoid modifying the original
+	lastPlayedRounds := make([]*Round, s.currentRoundIdx+1)
+	copy(lastPlayedRounds, s.rounds[0:s.currentRoundIdx+1])
+
+	// Reverse the new slice
+	slices.Reverse(lastPlayedRounds)
+
+	return lastPlayedRounds
 }

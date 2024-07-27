@@ -23,24 +23,35 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to generate fixtures: %v\n", err)
 	}
 
-	PlayAllFixturesIteractive(&schedule)
+	err = PlayAllFixturesIteractive(&schedule)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: [%s]\n", err.Error())
+		os.Exit(1)
+	}
 }
 
-func PlayAllFixturesNonInteractive(s *Schedule) {
-	s.PlayAllFixtures()
+func PlayAllFixturesNonInteractive(s *Schedule) error {
+	err := s.PlayAllFixtures()
+	if err != nil {
+		return err
+	}
 	s.Print()
 
 	standings := GenerateStandings(s)
 	standings.Print()
+	return nil
 }
 
-func PlayAllFixturesIteractive(s *Schedule) {
+func PlayAllFixturesIteractive(s *Schedule) error {
 	fmt.Println("Press [ENTER] to play the next round.")
 
 	for !s.finished {
 		reader := bufio.NewReader(os.Stdin)
 		reader.ReadString('\n')
-		s.PlayNextRoundFixtures()
+		err := s.PlayNextRoundFixtures()
+		if err != nil {
+			return err
+		}
 		s.PrintLastPlayedRound()
 
 		standings := GenerateStandings(s)
@@ -54,4 +65,5 @@ func PlayAllFixturesIteractive(s *Schedule) {
 		}
 	}
 
+	return nil
 }

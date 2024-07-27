@@ -50,12 +50,13 @@ var (
 	}
 )
 
-func GptRetrieveMessage(apiKey string, teamName string, valueDiff float64, roundNum int) (string, string, error) {
+func GptRetrieveMessage(apiKey string, teamName string, roundNum int) (string, float64, string, error) {
 	attributeType := util.UtilRandomChoice(MORALE_ATTRIBUTE, PHYSICAL_CONDITION_ATTRIBUTE).(AttributeType)
 	messageCategory := util.UtilRandomChoice(MESSAGE_CATEGORY_CONTROVERSIAL, MESSAGE_CATEGORY_FUNNY, MESSAGE_CATEGORY_INJURY).(MessageCategory)
+	valueDiff := util.SimUtilRandomValueFromNormalDistribution(0.0, 4.0)
 
 	fullMessage := fmt.Sprintf(GPT_CONTEXT_MESSAGE, roundNum, teamName, valueDiff, attributeType.Name, attributeType.Description, messageCategory)
 	gptMessage, err := GptApiCall(apiKey, fullMessage)
 
-	return attributeType.Name, gptMessage, err
+	return attributeType.Name, valueDiff, gptMessage, err
 }

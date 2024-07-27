@@ -87,9 +87,7 @@ func TeamsGetAllNames() []string {
 }
 
 func (t *Team) GenerateGptBasedRandomEvent(gptApiKey string, roundNum int) (string, float64, string, error) {
-	valueDiff := SimUtilRandomValueFromNormalDistribution(0.0, 4.0)
-
-	attributeType, msg, err := gpt.GptRetrieveMessage(gptApiKey, t.Name, valueDiff, roundNum)
+	attributeType, valueDiff, msg, err := gpt.GptRetrieveMessage(gptApiKey, t.Name, roundNum)
 	return attributeType, valueDiff, msg, err
 }
 
@@ -99,7 +97,7 @@ func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 	t.DynamicAttributes.LastFixtures = append(t.DynamicAttributes.LastFixtures, playedFixture)
 	slices.Reverse(t.DynamicAttributes.LastFixtures)
 
-	t.DynamicAttributes.PhysicalCondition = t.DynamicAttributes.PhysicalCondition + SimUtilRandomValueFromNormalDistribution(0.0, PHYSICAL_CONDITION_UPDATE_STDDEV)
+	t.DynamicAttributes.PhysicalCondition = t.DynamicAttributes.PhysicalCondition + util.SimUtilRandomValueFromNormalDistribution(0.0, PHYSICAL_CONDITION_UPDATE_STDDEV)
 	t.DynamicAttributes.PhysicalCondition = util.UtilClamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
 
 	goalDiff := 0
@@ -114,7 +112,7 @@ func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 	// this is proportional to the stddev because, if the stddev is increased, we want to also shift the mean proportionally,
 	// to ensure that the match results will continue having a meaningful impact on the morale update.
 	normalMean := float64(goalDiff) * MORALE_UPDATE_STDDEV
-	t.DynamicAttributes.Morale = t.DynamicAttributes.Morale + SimUtilRandomValueFromNormalDistribution(normalMean, MORALE_UPDATE_STDDEV)
+	t.DynamicAttributes.Morale = t.DynamicAttributes.Morale + util.SimUtilRandomValueFromNormalDistribution(normalMean, MORALE_UPDATE_STDDEV)
 	t.DynamicAttributes.Morale = util.UtilClamp(t.DynamicAttributes.Morale, 0, 10)
 	return nil
 }

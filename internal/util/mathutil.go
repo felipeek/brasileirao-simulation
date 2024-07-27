@@ -1,4 +1,4 @@
-package simulation
+package util
 
 import (
 	"math"
@@ -32,11 +32,11 @@ func SimUtilPoissonKnuth(lambda float64) int {
 	return k - 1
 }
 
-func SimUtilAttenuateStrength(x float64) float64 {
+func SimUtilAttenuateStrength(x, logAdjustFactor float64) float64 {
 	if x <= 0 {
 		return 0
 	}
-	return math.Log(1 + LOG_ADJUST_FACTOR*x)
+	return math.Log(1 + logAdjustFactor*x)
 }
 
 // Given a contribution C in [0,10] and an impact I on the overall simulation, finds a multiplier M

@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"math"
 	"os"
 )
 
@@ -24,9 +25,13 @@ func UtilInt64Abs(x int64) int64 {
 	return x
 }
 
-func MaxInt64(x int64, y int64) int64 {
+func UtilMaxInt64(x int64, y int64) int64 {
 	if x > y {
 		return x
 	}
 	return y
+}
+
+func UtilClamp(value, min, max float64) float64 {
+	return math.Max(min, math.Min(max, value))
 }

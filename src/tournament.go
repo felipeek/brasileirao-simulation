@@ -17,7 +17,7 @@ type Schedule struct {
 	rounds          []*Round
 }
 
-func GenerateSchedule(teams map[string]Team) (Schedule, error) {
+func GenerateSchedule(teams map[string]*Team) (Schedule, error) {
 	if len(teams)%2 != 0 {
 		return Schedule{}, fmt.Errorf("Number of teams must be pair")
 	}
@@ -125,9 +125,7 @@ func GenerateSchedule(teams map[string]Team) (Schedule, error) {
 
 func (r *Round) PlayFixturesOfRound(lastRounds []*Round) error {
 	for _, fixture := range r.fixtures {
-		homeTeamLastFixtures := getTeamLastFixtures(fixture.homeTeam, lastRounds)
-		awayTeamLastFixtures := getTeamLastFixtures(fixture.awayTeam, lastRounds)
-		err := fixture.Play(homeTeamLastFixtures, awayTeamLastFixtures)
+		err := fixture.Play()
 		if err != nil {
 			return err
 		}
@@ -138,13 +136,9 @@ func (r *Round) PlayFixturesOfRound(lastRounds []*Round) error {
 
 func (s *Schedule) PlayAllFixtures() error {
 	for _, round := range s.rounds {
-		playedRounds := s.getPlayedRounds()
-
 		for _, fixture := range round.fixtures {
 			if !fixture.played {
-				homeTeamLastFixtures := getTeamLastFixtures(fixture.homeTeam, playedRounds)
-				awayTeamLastFixtures := getTeamLastFixtures(fixture.awayTeam, playedRounds)
-				err := fixture.Play(homeTeamLastFixtures, awayTeamLastFixtures)
+				err := fixture.Play()
 				if err != nil {
 					return err
 				}

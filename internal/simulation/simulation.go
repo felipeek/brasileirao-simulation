@@ -1,20 +1,18 @@
-package main
+package simulation
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
-func main() {
+func Simulate(nonInteractive bool, gptApiKey string) {
 	rand.Seed(time.Now().UnixNano())
-
-	nonInteractive := flag.Bool("non-interactive", false, "Run in non-interactive mode")
-
-	flag.Parse()
 
 	err := TeamsLoad()
 	if err != nil {
@@ -28,10 +26,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to generate fixtures: %v\n", err)
 	}
 
-	if *nonInteractive {
+	if nonInteractive {
 		err = PlayAllFixturesNonInteractive(&schedule)
 	} else {
-		err = PlayAllFixturesIteractive(&schedule)
+		err = PlayAllFixturesIteractive(&schedule, gptApiKey)
 	}
 
 	if err != nil {
@@ -58,7 +56,7 @@ func PlayAllFixturesNonInteractive(s *Schedule) error {
 	return nil
 }
 
-func PlayAllFixturesIteractive(s *Schedule) error {
+func PlayAllFixturesIteractive(s *Schedule, gptApiKey string) error {
 	fmt.Println("Press [ENTER] to play the next round.")
 
 	for !s.finished {
@@ -78,6 +76,27 @@ func PlayAllFixturesIteractive(s *Schedule) error {
 			fmt.Printf("##################################################################\n")
 			fmt.Printf("The champion: [%s]!\n", standings.TeamStatistics[0].Name)
 			fmt.Printf("##################################################################\n")
+			return nil
+		}
+
+		if gptApiKey != "" {
+			reader.ReadString('\n')
+
+			teamsNames := TeamsGetAllNames()
+			teamName := util.UtilRandomChoiceStr(teamsNames...).(string)
+			randomTeam := TeamsGetWithName(teamName)
+			attributeType, diff, eventStr, err := randomTeam.GenerateGptBasedRandomEvent(gptApiKey, s.currentRoundIdx+1)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Round [%d] Event:\n", s.currentRoundIdx+1)
+			fmt.Printf("\t- %s\n", eventStr)
+
+			signal := '+'
+			if diff < 0 {
+				signal = '-'
+			}
+			fmt.Printf("\t- Effect: %s's %s: %c%.2f\n\n", teamName, attributeType, signal, math.Abs(diff))
 		}
 	}
 

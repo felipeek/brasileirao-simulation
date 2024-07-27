@@ -1,4 +1,4 @@
-package main
+package simulation
 
 import (
 	"encoding/json"
@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"os"
 	"slices"
+
+	"github.com/felipeek/brasileirao-simulation/internal/gpt"
+	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
 type Team struct {
@@ -42,7 +45,7 @@ func TeamsLoad() error {
 
 	for _, dirEntry := range files {
 		filePath := TEAMS_PATH + dirEntry.Name()
-		raw, err := UtilReadFile(filePath)
+		raw, err := util.UtilReadFile(filePath)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to open team [%s]: %v\n", filePath, err)
@@ -75,6 +78,21 @@ func TeamsGet() map[string]*Team {
 	return teams
 }
 
+func TeamsGetAllNames() []string {
+	names := make([]string, 0, len(teams))
+	for name := range teams {
+		names = append(names, name)
+	}
+	return names
+}
+
+func (t *Team) GenerateGptBasedRandomEvent(gptApiKey string, roundNum int) (string, float64, string, error) {
+	valueDiff := SimUtilRandomValueFromNormalDistribution(0.0, 4.0)
+
+	attributeType, msg, err := gpt.GptRetrieveMessage(gptApiKey, t.Name, valueDiff, roundNum)
+	return attributeType, valueDiff, msg, err
+}
+
 func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 	// Not very performant, but shouldn't matter...
 	slices.Reverse(t.DynamicAttributes.LastFixtures)
@@ -82,7 +100,7 @@ func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 	slices.Reverse(t.DynamicAttributes.LastFixtures)
 
 	t.DynamicAttributes.PhysicalCondition = t.DynamicAttributes.PhysicalCondition + SimUtilRandomValueFromNormalDistribution(0.0, PHYSICAL_CONDITION_UPDATE_STDDEV)
-	t.DynamicAttributes.PhysicalCondition = UtilClamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
+	t.DynamicAttributes.PhysicalCondition = util.UtilClamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
 
 	goalDiff := 0
 	if playedFixture.homeTeam == t.Name {
@@ -97,6 +115,6 @@ func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 	// to ensure that the match results will continue having a meaningful impact on the morale update.
 	normalMean := float64(goalDiff) * MORALE_UPDATE_STDDEV
 	t.DynamicAttributes.Morale = t.DynamicAttributes.Morale + SimUtilRandomValueFromNormalDistribution(normalMean, MORALE_UPDATE_STDDEV)
-	t.DynamicAttributes.Morale = UtilClamp(t.DynamicAttributes.Morale, 0, 10)
+	t.DynamicAttributes.Morale = util.UtilClamp(t.DynamicAttributes.Morale, 0, 10)
 	return nil
 }

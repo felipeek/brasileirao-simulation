@@ -1,9 +1,11 @@
-package main
+package simulation
 
 import (
 	"fmt"
 	"math/rand"
 	"slices"
+
+	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
 type Round struct {
@@ -83,7 +85,7 @@ func GenerateSchedule(teams map[string]*Team) (Schedule, error) {
 			firstTeamCount := homeAwayCountMap[fixture.homeTeam]
 			secondTeamCount := homeAwayCountMap[fixture.awayTeam]
 
-			if UtilInt64Abs(firstTeamCount) > UtilInt64Abs(secondTeamCount) {
+			if util.UtilInt64Abs(firstTeamCount) > util.UtilInt64Abs(secondTeamCount) {
 				if firstTeamCount > 0 {
 					cached := fixture.homeTeam
 					fixture.homeTeam = fixture.awayTeam

@@ -1,8 +1,9 @@
-package main
+package util
 
 import (
 	"io"
 	"math"
+	"math/rand"
 	"os"
 )
 
@@ -34,4 +35,20 @@ func UtilMaxInt64(x int64, y int64) int64 {
 
 func UtilClamp(value, min, max float64) float64 {
 	return math.Max(min, math.Min(max, value))
+}
+
+func UtilRandomChoiceStr(choices ...string) interface{} {
+	if len(choices) == 0 {
+		return nil // Retorna nil se não houver argumentos
+	}
+	randomIndex := rand.Intn(len(choices))
+	return choices[randomIndex]
+}
+
+func UtilRandomChoice(choices ...interface{}) interface{} {
+	if len(choices) == 0 {
+		return nil // Retorna nil se não houver argumentos
+	}
+	randomIndex := rand.Intn(len(choices))
+	return choices[randomIndex]
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
@@ -10,6 +11,10 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+
+	nonInteractive := flag.Bool("non-interactive", false, "Run in non-interactive mode")
+
+	flag.Parse()
 
 	err := TeamsLoad()
 	if err != nil {
@@ -23,7 +28,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to generate fixtures: %v\n", err)
 	}
 
-	err = PlayAllFixturesIteractive(&schedule)
+	if *nonInteractive {
+		err = PlayAllFixturesNonInteractive(&schedule)
+	} else {
+		err = PlayAllFixturesIteractive(&schedule)
+	}
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: [%s]\n", err.Error())
 		os.Exit(1)
@@ -39,6 +49,12 @@ func PlayAllFixturesNonInteractive(s *Schedule) error {
 
 	standings := GenerateStandings(s)
 	standings.Print()
+
+	fmt.Println()
+	fmt.Printf("##################################################################\n")
+	fmt.Printf("The champion: [%s]!\n", standings.TeamStatistics[0].Name)
+	fmt.Printf("##################################################################\n")
+
 	return nil
 }
 

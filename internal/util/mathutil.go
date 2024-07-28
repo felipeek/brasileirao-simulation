@@ -6,7 +6,7 @@ import (
 )
 
 // Box-Muller transform.
-func SimUtilRandomValueFromNormalDistribution(center, stddev float64) float64 {
+func RandomValueFromNormalDistribution(center, stddev float64) float64 {
 	u1 := rand.Float64()
 	u2 := rand.Float64()
 	z0 := math.Sqrt(-2.0*math.Log(u1)) * math.Cos(2.0*math.Pi*u2)
@@ -14,7 +14,7 @@ func SimUtilRandomValueFromNormalDistribution(center, stddev float64) float64 {
 }
 
 // https://www.johndcook.com/blog/2010/06/14/generating-poisson-random-values/
-func SimUtilPoissonKnuth(lambda float64) int {
+func PoissonKnuth(lambda float64) int {
 	if lambda <= 0 {
 		return 0
 	}
@@ -32,7 +32,7 @@ func SimUtilPoissonKnuth(lambda float64) int {
 	return k - 1
 }
 
-func SimUtilAttenuateStrength(x, logAdjustFactor float64) float64 {
+func AttenuateStrength(x, logAdjustFactor float64) float64 {
 	if x <= 0 {
 		return 0
 	}
@@ -46,6 +46,6 @@ func SimUtilAttenuateStrength(x, logAdjustFactor float64) float64 {
 // The following relation will be always true: max(M) = 1 / min(M)
 // To test MAX multiplier in calculator: (1+I)^(10−5)
 // To test MIN multiplier in calculator: (1+I)^(0−5)
-func SimUtilGetMultiplierFromContributionFactor(contribution, impact float64) float64 {
+func GetMultiplierFromContributionFactor(contribution, impact float64) float64 {
 	return math.Pow(1+impact, contribution-5)
 }

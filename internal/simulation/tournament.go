@@ -3,7 +3,6 @@ package simulation
 import (
 	"fmt"
 	"math/rand"
-	"slices"
 
 	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
@@ -19,9 +18,9 @@ type Schedule struct {
 	rounds          []*Round
 }
 
-func GenerateSchedule(teams map[string]*Team) (Schedule, error) {
+func generateSchedule(teams map[string]*Team) (Schedule, error) {
 	if len(teams)%2 != 0 {
-		return Schedule{}, fmt.Errorf("Number of teams must be pair")
+		return Schedule{}, fmt.Errorf("number of teams must be pair")
 	}
 
 	schedule := Schedule{}
@@ -118,16 +117,12 @@ func GenerateSchedule(teams map[string]*Team) (Schedule, error) {
 		schedule.rounds = append(schedule.rounds, &counterpartRound)
 	}
 
-	//for teamName, _ := range teams {
-	//	fmt.Printf("%s: %d\n", teamName, homeAwayCountMap[teamName])
-	//}
-
 	return schedule, nil
 }
 
-func (r *Round) PlayFixturesOfRound(lastRounds []*Round) error {
+func (r *Round) playFixtures() error {
 	for _, fixture := range r.fixtures {
-		err := fixture.Play()
+		err := fixture.play()
 		if err != nil {
 			return err
 		}
@@ -136,11 +131,11 @@ func (r *Round) PlayFixturesOfRound(lastRounds []*Round) error {
 	return nil
 }
 
-func (s *Schedule) PlayAllFixtures() error {
+func (s *Schedule) playAllFixtures() error {
 	for _, round := range s.rounds {
 		for _, fixture := range round.fixtures {
 			if !fixture.played {
-				err := fixture.Play()
+				err := fixture.play()
 				if err != nil {
 					return err
 				}
@@ -154,13 +149,13 @@ func (s *Schedule) PlayAllFixtures() error {
 	return nil
 }
 
-func (s *Schedule) PlayNextRoundFixtures() error {
+func (s *Schedule) playNextRoundFixtures() error {
 	if s.finished {
 		return nil
 	}
 
 	round := s.rounds[s.nextRoundIdx]
-	err := round.PlayFixturesOfRound(s.getPlayedRounds())
+	err := round.playFixtures()
 	if err != nil {
 		return err
 	}
@@ -174,52 +169,23 @@ func (s *Schedule) PlayNextRoundFixtures() error {
 	return nil
 }
 
-func (r *Round) Print() {
+func (r *Round) print(enableTerminalColors bool) {
 	for _, fixture := range r.fixtures {
 		fmt.Printf("\t%s %d x %d %s\n", fixture.homeTeam, fixture.homeTeamScore, fixture.awayTeamScore, fixture.awayTeam)
 	}
 }
 
-func (s *Schedule) Print(enableTerminalColors bool) {
+func (s *Schedule) print(enableTerminalColors bool) {
 	for i, round := range s.rounds {
 		fmt.Printf("Round [%d]\n", i+1)
-		round.Print()
+		round.print(enableTerminalColors)
 	}
 }
 
-func (s *Schedule) PrintLastPlayedRound() {
+func (s *Schedule) printLastPlayedRound(enableTerminalColors bool) {
 	if s.currentRoundIdx >= 0 {
 		fmt.Printf("Round [%d]\n", s.currentRoundIdx+1)
 		round := s.rounds[s.currentRoundIdx]
-		round.Print()
+		round.print(enableTerminalColors)
 	}
-}
-
-func getTeamLastFixtures(teamName string, lastRounds []*Round) []Fixture {
-	lastFixtures := []Fixture{}
-	for _, r := range lastRounds {
-		for _, f := range r.fixtures {
-			if f.homeTeam == teamName || f.awayTeam == teamName {
-				lastFixtures = append(lastFixtures, *f)
-				break
-			}
-		}
-	}
-
-	return lastFixtures
-}
-
-func (s *Schedule) getPlayedRounds() []*Round {
-	if s.currentRoundIdx < 0 {
-		return []*Round{}
-	}
-
-	// Create a new slice to avoid modifying the original
-	lastPlayedRounds := make([]*Round, s.currentRoundIdx+1)
-	copy(lastPlayedRounds, s.rounds[0:s.currentRoundIdx+1])
-
-	// Reverse the new slice
-	slices.Reverse(lastPlayedRounds)
-
-	return lastPlayedRounds
 }

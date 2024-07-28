@@ -3,34 +3,28 @@ package simulation
 import (
 	"bufio"
 	"fmt"
-	"math"
-	"math/rand"
 	"os"
-	"time"
 
-	"github.com/felipeek/brasileirao-simulation/internal/gpt"
 	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
 func Simulate(nonInteractive bool, gptApiKey string, enableTerminalColors bool) {
-	rand.Seed(time.Now().UnixNano())
-
-	err := TeamsLoad()
+	err := teamsLoad()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to load teams: %v\n", err)
 	}
 
-	teams := TeamsGet()
+	teams := teamsGet()
 
-	schedule, err := GenerateSchedule(teams)
+	schedule, err := generateSchedule(teams)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to generate fixtures: %v\n", err)
 	}
 
 	if nonInteractive {
-		err = PlayAllFixturesNonInteractive(&schedule, enableTerminalColors)
+		err = playAllFixturesNonInteractive(&schedule, enableTerminalColors)
 	} else {
-		err = PlayAllFixturesIteractive(&schedule, gptApiKey, enableTerminalColors)
+		err = playAllFixturesIteractive(&schedule, gptApiKey, enableTerminalColors)
 	}
 
 	if err != nil {
@@ -39,83 +33,69 @@ func Simulate(nonInteractive bool, gptApiKey string, enableTerminalColors bool) 
 	}
 }
 
-func PlayAllFixturesNonInteractive(s *Schedule, enableTerminalColors bool) error {
-	err := s.PlayAllFixtures()
+func playAllFixturesNonInteractive(s *Schedule, enableTerminalColors bool) error {
+	err := s.playAllFixtures()
 	if err != nil {
 		return err
 	}
-	s.Print(enableTerminalColors)
+	s.print(enableTerminalColors)
 
-	standings := GenerateStandings(s)
-	err = standings.Print(enableTerminalColors)
+	standings := standingsGenerate(s)
+	err = standings.print(enableTerminalColors)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println()
-	fmt.Printf("##################################################################\n")
-	fmt.Printf("The champion: [%s]!\n", standings.TeamStatistics[0].Name)
-	fmt.Printf("##################################################################\n")
+	printChampionMessage(standings.TeamStatistics[0].Name)
 
 	return nil
 }
 
-func PlayAllFixturesIteractive(s *Schedule, gptApiKey string, enableTerminalColors bool) error {
+func playAllFixturesIteractive(s *Schedule, gptApiKey string, enableTerminalColors bool) error {
 	fmt.Println("Press [ENTER] to play the next round.")
 
 	for !s.finished {
 		reader := bufio.NewReader(os.Stdin)
 		reader.ReadString('\n')
-		err := s.PlayNextRoundFixtures()
+		err := s.playNextRoundFixtures()
 		if err != nil {
 			return err
 		}
-		s.PrintLastPlayedRound()
+		s.printLastPlayedRound(enableTerminalColors)
 
-		standings := GenerateStandings(s)
-		err = standings.Print(enableTerminalColors)
+		standings := standingsGenerate(s)
+		err = standings.print(enableTerminalColors)
 		if err != nil {
 			return err
 		}
 
 		if s.finished {
-			fmt.Println()
-			fmt.Printf("##################################################################\n")
-			fmt.Printf("The champion: [%s]!\n", standings.TeamStatistics[0].Name)
-			fmt.Printf("##################################################################\n")
+			printChampionMessage(standings.TeamStatistics[0].Name)
 			return nil
 		}
 
 		if gptApiKey != "" {
 			reader.ReadString('\n')
 
-			teamsNames := TeamsGetAllNames()
+			teamsNames := teamsGetAllNames()
 			teamName := util.UtilRandomChoiceStr(teamsNames...).(string)
-			randomTeam := TeamsGetWithName(teamName)
-			attributeType, diff, eventStr, err := randomTeam.GenerateGptBasedRandomEvent(gptApiKey, s.currentRoundIdx+1)
+			randomTeam := teamsGetWithName(teamName)
+			eventStr, err := randomTeam.generateGptBasedRandomEvent(gptApiKey)
 			if err != nil {
 				return err
 			}
 			fmt.Printf("Round [%d] Event:\n", s.currentRoundIdx+1)
 			fmt.Printf("\t- %s\n", eventStr)
-
-			signal := '+'
-			if diff < 0 {
-				signal = '-'
-			}
-			fmt.Printf("\t- Effect: %s's %s: %c%.2f\n\n", teamName, attributeType, signal, math.Abs(diff))
-
-			// TODO: refactor this logic of sharing the existing attributes between simulation and gpt, this is currently messy
-			// also add functions to increment/decrement these attributes as part of Team, and clamp there
-			if attributeType == gpt.MORALE_ATTRIBUTE.Name {
-				randomTeam.DynamicAttributes.Morale += diff
-				randomTeam.DynamicAttributes.Morale = util.UtilClamp(randomTeam.DynamicAttributes.Morale, 0, 10)
-			} else if attributeType == gpt.PHYSICAL_CONDITION_ATTRIBUTE.Name {
-				randomTeam.DynamicAttributes.PhysicalCondition += diff
-				randomTeam.DynamicAttributes.PhysicalCondition = util.UtilClamp(randomTeam.DynamicAttributes.PhysicalCondition, 0, 10)
-			}
+			fmt.Printf("\n\n")
 		}
 	}
 
 	return nil
+}
+
+func printChampionMessage(championName string) {
+	fmt.Println()
+	fmt.Printf("##################################################################\n")
+	fmt.Printf("The champion: [%s]!\n", championName)
+	fmt.Printf("##################################################################\n")
 }

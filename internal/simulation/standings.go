@@ -26,7 +26,7 @@ type Standings struct {
 	PreviousTeamStatistics []*TeamStatistic
 }
 
-func GenerateStandings(s *Schedule) Standings {
+func standingsGenerate(s *Schedule) Standings {
 	standings := Standings{}
 	standings.TeamStatistics = generateTeamStatisticsUntilRound(s, s.currentRoundIdx)
 	if s.currentRoundIdx > 0 {
@@ -53,7 +53,7 @@ func generateTeamStatisticsUntilRound(s *Schedule, roundIdx int) []*TeamStatisti
 }
 
 func fillStandingsMapUntilRound(s *Schedule, roundIdx int) map[string]*TeamStatistic {
-	teams := TeamsGet()
+	teams := teamsGet()
 	standingsMap := make(map[string]*TeamStatistic)
 
 	for _, team := range teams {
@@ -153,13 +153,13 @@ func summedH2HResults(s *Schedule, team1Name string, team2Name string) (int, int
 	return team1SummedScore, team2SummedScore
 }
 
-func (s *Standings) Print(enableTerminalColors bool) error {
+func (s *Standings) print(enableTerminalColors bool) error {
 	headerFormat := "%-6s %-20s %-8s %-6s %-6s %-6s %-6s %-9s %-12s %-9s %-12s %-6s %-6s %-6s\n"
 	fmt.Printf(headerFormat, "Rank", "Team", "Matches", "Points", "Won", "Drawn", "Lost",
 		"GoalsFor", "GoalsAgainst", "GoalsDiff", "RecentForm", "Change", "Morale", "PhysCond")
 
 	for i, teamStatistics := range s.TeamStatistics {
-		team := TeamsGetWithName(teamStatistics.Name)
+		team := teamsGetWithName(teamStatistics.Name)
 		teamRecentFiveGoalDiffs := getTeamRecentFiveGoalDiffs(teamStatistics.Name, team.DynamicAttributes.LastFixtures)
 		teamPositionChange, err := getTeamPositionChange(teamStatistics.Name, s.TeamStatistics, s.PreviousTeamStatistics)
 		if err != nil {
@@ -289,29 +289,6 @@ func printStandingsGoalsDiff(enableTerminalColors bool, goalsDiff int) {
 	}
 }
 
-func getTeamRecentFiveGoalDiffs(teamName string, recentMatches []*Fixture) [5]*int {
-	var result [5]*int
-
-	currentPosition := 0
-	for i := 4; i >= 0; i-- {
-		if i >= len(recentMatches) {
-			result[currentPosition] = nil
-			currentPosition += 1
-			continue
-		}
-
-		fixture := recentMatches[i]
-		goalDiff := fixture.homeTeamScore - fixture.awayTeamScore
-		if teamName == fixture.awayTeam {
-			goalDiff = -goalDiff
-		}
-		result[currentPosition] = &goalDiff
-		currentPosition += 1
-	}
-
-	return result
-}
-
 func printStandingsRecentForm(enableTerminalColors bool, lastFiveGoalDiffs [5]*int) {
 	matchChar := "● "
 	noMatchChar := "─ "
@@ -335,35 +312,6 @@ func printStandingsRecentForm(enableTerminalColors bool, lastFiveGoalDiffs [5]*i
 	fmt.Print("  ")
 }
 
-func getTeamPositionChange(teamName string, currentStatistics []*TeamStatistic, previousStatistics []*TeamStatistic) (int, error) {
-	if previousStatistics == nil {
-		return 0, nil
-	}
-
-	currentPosition := -1
-	previousPosition := -1
-
-	for i, teamStatistic := range currentStatistics {
-		if teamStatistic.Name == teamName {
-			currentPosition = i
-			break
-		}
-	}
-
-	for i, teamStatistic := range previousStatistics {
-		if teamStatistic.Name == teamName {
-			previousPosition = i
-			break
-		}
-	}
-
-	if currentPosition == -1 || previousPosition == -1 {
-		return 0, fmt.Errorf("Team [%s] was not found in teamStatistics", teamName)
-	}
-
-	return previousPosition - currentPosition, nil
-}
-
 func printStandingsChanges(enableTerminalColors bool, teamPositionChange int) {
 	format := "%c %-4d"
 	upChar := '↑'
@@ -385,20 +333,6 @@ func printStandingsChanges(enableTerminalColors bool, teamPositionChange int) {
 		} else {
 			ansi.Printf(ansi.BoldWhite, format, noChangeChar, teamPositionChange)
 		}
-	}
-}
-
-func getRankPrintColor(rank int) ansi.AnsiColor {
-	if rank <= 4 {
-		return ansi.BoldCyan
-	} else if rank <= 6 {
-		return ansi.BoldBlue
-	} else if rank <= 12 {
-		return ansi.BoldYellow
-	} else if rank <= 16 {
-		return ansi.BoldWhite
-	} else {
-		return ansi.BoldRed
 	}
 }
 
@@ -427,5 +361,70 @@ func printStandingsPhysicalCondition(enableTerminalColors bool, physicalConditio
 		fmt.Printf(format, physicalCondition)
 	} else {
 		ansi.Printf(getAttributeValuePrintColor(physicalCondition), format, physicalCondition)
+	}
+}
+func getTeamRecentFiveGoalDiffs(teamName string, recentMatches []*Fixture) [5]*int {
+	var result [5]*int
+
+	currentPosition := 0
+	for i := 4; i >= 0; i-- {
+		if i >= len(recentMatches) {
+			result[currentPosition] = nil
+			currentPosition += 1
+			continue
+		}
+
+		fixture := recentMatches[i]
+		goalDiff := fixture.homeTeamScore - fixture.awayTeamScore
+		if teamName == fixture.awayTeam {
+			goalDiff = -goalDiff
+		}
+		result[currentPosition] = &goalDiff
+		currentPosition += 1
+	}
+
+	return result
+}
+
+func getTeamPositionChange(teamName string, currentStatistics []*TeamStatistic, previousStatistics []*TeamStatistic) (int, error) {
+	if previousStatistics == nil {
+		return 0, nil
+	}
+
+	currentPosition := -1
+	previousPosition := -1
+
+	for i, teamStatistic := range currentStatistics {
+		if teamStatistic.Name == teamName {
+			currentPosition = i
+			break
+		}
+	}
+
+	for i, teamStatistic := range previousStatistics {
+		if teamStatistic.Name == teamName {
+			previousPosition = i
+			break
+		}
+	}
+
+	if currentPosition == -1 || previousPosition == -1 {
+		return 0, fmt.Errorf("team [%s] was not found in teamStatistics", teamName)
+	}
+
+	return previousPosition - currentPosition, nil
+}
+
+func getRankPrintColor(rank int) ansi.AnsiColor {
+	if rank <= 4 {
+		return ansi.BoldCyan
+	} else if rank <= 6 {
+		return ansi.BoldBlue
+	} else if rank <= 12 {
+		return ansi.BoldYellow
+	} else if rank <= 16 {
+		return ansi.BoldWhite
+	} else {
+		return ansi.BoldRed
 	}
 }

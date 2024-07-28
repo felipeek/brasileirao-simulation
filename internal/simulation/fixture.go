@@ -24,9 +24,9 @@ const (
 
 var recentFormMatchContributions = [5]float64{0.35, 0.20, 0.15, 0.15, 0.15}
 
-func (f *Fixture) Play() error {
-	homeTeam := TeamsGetWithName(f.homeTeam)
-	awayTeam := TeamsGetWithName(f.awayTeam)
+func (f *Fixture) play() error {
+	homeTeam := teamsGetWithName(f.homeTeam)
+	awayTeam := teamsGetWithName(f.awayTeam)
 
 	// Additional strength given to the home team (home factor)
 	homeStadiumStrength := HOME_BONUS_FACTOR * (homeTeam.HomeFactor / 10)
@@ -36,22 +36,22 @@ func (f *Fixture) Play() error {
 	if err != nil {
 		return err
 	}
-	homeTeamFormContribution := util.SimUtilGetMultiplierFromContributionFactor(homeTeamRawFormContribution, RECENT_FORM_CONTRIBUTION_IMPACT)
+	homeTeamFormContribution := util.GetMultiplierFromContributionFactor(homeTeamRawFormContribution, RECENT_FORM_CONTRIBUTION_IMPACT)
 
 	// Calculate away team recent form contribution
 	awayTeamRawFormContribution, err := calculateFormContribution(f.awayTeam, awayTeam.DynamicAttributes.LastFixtures)
 	if err != nil {
 		return err
 	}
-	awayTeamFormContribution := util.SimUtilGetMultiplierFromContributionFactor(awayTeamRawFormContribution, RECENT_FORM_CONTRIBUTION_IMPACT)
+	awayTeamFormContribution := util.GetMultiplierFromContributionFactor(awayTeamRawFormContribution, RECENT_FORM_CONTRIBUTION_IMPACT)
 
 	// Caclulate morale contribution
-	homeTeamMoraleContribution := util.SimUtilGetMultiplierFromContributionFactor(homeTeam.DynamicAttributes.Morale, MORALE_CONTRIBUTION_IMPACT)
-	awayTeamMoraleContribution := util.SimUtilGetMultiplierFromContributionFactor(awayTeam.DynamicAttributes.Morale, MORALE_CONTRIBUTION_IMPACT)
+	homeTeamMoraleContribution := util.GetMultiplierFromContributionFactor(homeTeam.DynamicAttributes.Morale, MORALE_CONTRIBUTION_IMPACT)
+	awayTeamMoraleContribution := util.GetMultiplierFromContributionFactor(awayTeam.DynamicAttributes.Morale, MORALE_CONTRIBUTION_IMPACT)
 
 	// Caclulate physical condition contribution
-	homeTeamPhysicalConditionContribution := util.SimUtilGetMultiplierFromContributionFactor(homeTeam.DynamicAttributes.PhysicalCondition, PHYSICAL_CONDITION_CONTRIBUTION_IMPACT)
-	awayTeamPhysicalConditionContribution := util.SimUtilGetMultiplierFromContributionFactor(awayTeam.DynamicAttributes.PhysicalCondition, PHYSICAL_CONDITION_CONTRIBUTION_IMPACT)
+	homeTeamPhysicalConditionContribution := util.GetMultiplierFromContributionFactor(homeTeam.DynamicAttributes.PhysicalCondition, PHYSICAL_CONDITION_CONTRIBUTION_IMPACT)
+	awayTeamPhysicalConditionContribution := util.GetMultiplierFromContributionFactor(awayTeam.DynamicAttributes.PhysicalCondition, PHYSICAL_CONDITION_CONTRIBUTION_IMPACT)
 
 	// Home team strength factors
 	homeAttackStrength := 1.5*homeTeam.Attack + homeTeam.Midfield
@@ -70,12 +70,12 @@ func (f *Fixture) Play() error {
 	awayStrength := awayTeamFormContribution * awayTeamMoraleContribution * awayTeamPhysicalConditionContribution * awayRawStrength
 
 	// Attenuate strengths by employing a log-based function
-	homeLambda := util.SimUtilAttenuateStrength(homeStrength, LOG_ADJUST_FACTOR)
-	awayLambda := util.SimUtilAttenuateStrength(awayStrength, LOG_ADJUST_FACTOR)
+	homeLambda := util.AttenuateStrength(homeStrength, LOG_ADJUST_FACTOR)
+	awayLambda := util.AttenuateStrength(awayStrength, LOG_ADJUST_FACTOR)
 
 	// Generate final scores based on a poisson distribution
-	f.homeTeamScore = util.SimUtilPoissonKnuth(homeLambda)
-	f.awayTeamScore = util.SimUtilPoissonKnuth(awayLambda)
+	f.homeTeamScore = util.PoissonKnuth(homeLambda)
+	f.awayTeamScore = util.PoissonKnuth(awayLambda)
 
 	//fmt.Printf("%s: %f \n", f.homeTeam, homeTeamFormContribution)
 	//fmt.Printf("%s: %f \n\n", f.awayTeam, awayTeamFormContribution)

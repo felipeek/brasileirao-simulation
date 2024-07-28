@@ -6,16 +6,11 @@ import (
 	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
-type MessageCategory string
-
-type AttributeType struct {
-	Name        string
-	Description string
-}
+type messageCategory string
 
 const (
 	GPT_CONTEXT_MESSAGE = "You are being used in the simulation of Brazilian Soccer Championship (Brasileirao).\n" +
-		"You are being invoked after round [%d] and your job is to generate a random event that will:\n" +
+		"You are being invoked after a tournament round and your job is to generate a random event that will:\n" +
 		"Impact the team [%s] by adding the value [%f] to the attribute [%s].\n" +
 		"Attribute description: [%s]\n" +
 		"If the received value is POSITIVE, the event MUST BE POSITIVE, otherwise it MUST BE NEGATIVE.\n" +
@@ -28,35 +23,15 @@ const (
 )
 
 const (
-	MORALE_DESCRIPTION             = "The morale of the squad, ranging from 0 to 10."
-	PHYSICAL_CONDITION_DESCRIPTION = "The physical condition of the squad, ranging from 0 to 10."
+	MESSAGE_CATEGORY_FUNNY         messageCategory = "FUNNY"
+	MESSAGE_CATEGORY_CONTROVERSIAL messageCategory = "CONTROVERSIAL"
+	MESSAGE_CATEGORY_INJURY        messageCategory = "MEDICAL_DEPARTMENT"
 )
 
-const (
-	MESSAGE_CATEGORY_FUNNY         MessageCategory = "FUNNY"
-	MESSAGE_CATEGORY_CONTROVERSIAL MessageCategory = "CONTROVERSIAL"
-	MESSAGE_CATEGORY_INJURY        MessageCategory = "MEDICAL_DEPARTMENT"
-)
-
-var (
-	MORALE_ATTRIBUTE = AttributeType{
-		Name:        "MORALE",
-		Description: MORALE_DESCRIPTION,
-	}
-
-	PHYSICAL_CONDITION_ATTRIBUTE = AttributeType{
-		Name:        "PHYSICAL_CONDITION",
-		Description: PHYSICAL_CONDITION_DESCRIPTION,
-	}
-)
-
-func GptRetrieveMessage(apiKey string, teamName string, roundNum int) (string, float64, string, error) {
-	attributeType := util.UtilRandomChoice(MORALE_ATTRIBUTE, PHYSICAL_CONDITION_ATTRIBUTE).(AttributeType)
-	messageCategory := util.UtilRandomChoice(MESSAGE_CATEGORY_CONTROVERSIAL, MESSAGE_CATEGORY_FUNNY, MESSAGE_CATEGORY_INJURY).(MessageCategory)
-	valueDiff := util.SimUtilRandomValueFromNormalDistribution(0.0, 4.0)
-
-	fullMessage := fmt.Sprintf(GPT_CONTEXT_MESSAGE, roundNum, teamName, valueDiff, attributeType.Name, attributeType.Description, messageCategory)
+func GptRetrieveMessage(apiKey string, teamName string, attributeName string, attributeDescription string, valueDiff float64) (string, error) {
+	messageCategory := util.UtilRandomChoice(MESSAGE_CATEGORY_CONTROVERSIAL, MESSAGE_CATEGORY_FUNNY, MESSAGE_CATEGORY_INJURY).(messageCategory)
+	fullMessage := fmt.Sprintf(GPT_CONTEXT_MESSAGE, teamName, valueDiff, attributeName, attributeDescription, messageCategory)
 	gptMessage, err := GptApiCall(apiKey, fullMessage)
 
-	return attributeType.Name, valueDiff, gptMessage, err
+	return gptMessage, err
 }

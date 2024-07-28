@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 
@@ -27,6 +28,16 @@ type TeamDynamicAttributes struct {
 }
 
 const (
+	TEAM_DYNAMIC_ATTRIBUTE_MORALE_NAME             = "MORALE"
+	TEAM_DYNAMIC_ATTRIBUTE_PHYSICAL_CONDITION_NAME = "PHYSICAL_CONDITION"
+)
+
+type AttributeType struct {
+	Name        string
+	Description string
+}
+
+const (
 	TEAMS_PATH = "teams/"
 
 	// The bigger the value, the bigger the potential morale update values
@@ -37,7 +48,7 @@ const (
 
 var teams map[string]*Team = make(map[string]*Team)
 
-func TeamsLoad() error {
+func teamsLoad() error {
 	files, err := os.ReadDir(TEAMS_PATH)
 	if err != nil {
 		return err
@@ -70,15 +81,15 @@ func TeamsLoad() error {
 	return nil
 }
 
-func TeamsGetWithName(name string) *Team {
+func teamsGetWithName(name string) *Team {
 	return teams[name]
 }
 
-func TeamsGet() map[string]*Team {
+func teamsGet() map[string]*Team {
 	return teams
 }
 
-func TeamsGetAllNames() []string {
+func teamsGetAllNames() []string {
 	names := make([]string, 0, len(teams))
 	for name := range teams {
 		names = append(names, name)
@@ -86,9 +97,62 @@ func TeamsGetAllNames() []string {
 	return names
 }
 
-func (t *Team) GenerateGptBasedRandomEvent(gptApiKey string, roundNum int) (string, float64, string, error) {
-	attributeType, valueDiff, msg, err := gpt.GptRetrieveMessage(gptApiKey, t.Name, roundNum)
-	return attributeType, valueDiff, msg, err
+func teamsGetDynamicAttributeMetadata() []AttributeType {
+	dynamicAttributesMetadata := make([]AttributeType, 0)
+
+	// NOTE: The order here should be aligned with the order of the TEAM_DYNAMIC_ATTRIBUTE_* constants
+	dynamicAttributesMetadata = append(dynamicAttributesMetadata, AttributeType{
+		Name:        TEAM_DYNAMIC_ATTRIBUTE_MORALE_NAME,
+		Description: "The morale of the squad, ranging from 0 to 10.",
+	})
+
+	dynamicAttributesMetadata = append(dynamicAttributesMetadata, AttributeType{
+		Name:        TEAM_DYNAMIC_ATTRIBUTE_PHYSICAL_CONDITION_NAME,
+		Description: "The physical condition of the squad, ranging from 0 to 10.",
+	})
+
+	return dynamicAttributesMetadata
+}
+
+func (t *Team) generateGptBasedRandomEvent(gptApiKey string) (string, error) {
+	dynamicAttributesMetadatas := teamsGetDynamicAttributeMetadata()
+	attributeType := util.UtilRandomChoice(dynamicAttributesMetadatas).(AttributeType)
+	valueDiff := util.RandomValueFromNormalDistribution(0.0, 4.0)
+
+	err := t.changeDynamicAttribute(attributeType, valueDiff)
+	if err != nil {
+		return "", err
+	}
+
+	msg, err := gpt.GptRetrieveMessage(gptApiKey, t.Name, attributeType.Name, attributeType.Description, valueDiff)
+
+	signal := '+'
+	if valueDiff < 0 {
+		signal = '-'
+	}
+	fullMsg := msg + fmt.Sprintf("\n\t- Effect: %s's %s: %c%.2f", t.Name, attributeType, signal, math.Abs(valueDiff))
+	return fullMsg, err
+}
+
+func (t *Team) changeDynamicAttribute(attributeType AttributeType, valueDiff float64) error {
+	if attributeType.Name == TEAM_DYNAMIC_ATTRIBUTE_MORALE_NAME {
+		t.changeMorale(valueDiff)
+	} else if attributeType.Name == TEAM_DYNAMIC_ATTRIBUTE_PHYSICAL_CONDITION_NAME {
+		t.changePhysicalCondition(valueDiff)
+	} else {
+		return fmt.Errorf("unknown dynamic attribute [%s]", attributeType.Name)
+	}
+	return nil
+}
+
+func (t *Team) changeMorale(moraleDiff float64) {
+	t.DynamicAttributes.Morale += moraleDiff
+	t.DynamicAttributes.Morale = util.UtilClamp(t.DynamicAttributes.Morale, 0, 10)
+}
+
+func (t *Team) changePhysicalCondition(physicalCondDiff float64) {
+	t.DynamicAttributes.PhysicalCondition += physicalCondDiff
+	t.DynamicAttributes.PhysicalCondition = util.UtilClamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
 }
 
 func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
@@ -96,9 +160,6 @@ func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 	slices.Reverse(t.DynamicAttributes.LastFixtures)
 	t.DynamicAttributes.LastFixtures = append(t.DynamicAttributes.LastFixtures, playedFixture)
 	slices.Reverse(t.DynamicAttributes.LastFixtures)
-
-	t.DynamicAttributes.PhysicalCondition = t.DynamicAttributes.PhysicalCondition + util.SimUtilRandomValueFromNormalDistribution(0.0, PHYSICAL_CONDITION_UPDATE_STDDEV)
-	t.DynamicAttributes.PhysicalCondition = util.UtilClamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
 
 	goalDiff := 0
 	if playedFixture.homeTeam == t.Name {
@@ -111,8 +172,9 @@ func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {
 
 	// this is proportional to the stddev because, if the stddev is increased, we want to also shift the mean proportionally,
 	// to ensure that the match results will continue having a meaningful impact on the morale update.
-	normalMean := float64(goalDiff) * MORALE_UPDATE_STDDEV
-	t.DynamicAttributes.Morale = t.DynamicAttributes.Morale + util.SimUtilRandomValueFromNormalDistribution(normalMean, MORALE_UPDATE_STDDEV)
-	t.DynamicAttributes.Morale = util.UtilClamp(t.DynamicAttributes.Morale, 0, 10)
+	moraleNormalMean := float64(goalDiff) * MORALE_UPDATE_STDDEV
+
+	t.changeMorale(util.RandomValueFromNormalDistribution(moraleNormalMean, MORALE_UPDATE_STDDEV))
+	t.changePhysicalCondition(util.RandomValueFromNormalDistribution(0.0, PHYSICAL_CONDITION_UPDATE_STDDEV))
 	return nil
 }

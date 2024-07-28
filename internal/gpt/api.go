@@ -3,7 +3,6 @@ package gpt
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -89,6 +88,6 @@ func GptApiCall(apiKey string, messageContent string) (string, error) {
 		content := response.Choices[0].Message.Content
 		return content, nil
 	} else {
-		return "", errors.New(fmt.Sprintf("No choices found in the response (response is [%s])", body))
+		return "", fmt.Errorf("No choices found in the response (response is [%s])", body)
 	}
 }

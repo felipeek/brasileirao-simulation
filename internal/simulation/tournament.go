@@ -69,7 +69,7 @@ func GenerateSchedule(teams map[string]*Team) (Schedule, error) {
 		}
 	}
 
-	homeAwayCountMap := make(map[string]int64)
+	homeAwayCountMap := make(map[string]int)
 
 	for teamName, _ := range teams {
 		homeAwayCountMap[teamName] = 0
@@ -85,7 +85,7 @@ func GenerateSchedule(teams map[string]*Team) (Schedule, error) {
 			firstTeamCount := homeAwayCountMap[fixture.homeTeam]
 			secondTeamCount := homeAwayCountMap[fixture.awayTeam]
 
-			if util.UtilInt64Abs(firstTeamCount) > util.UtilInt64Abs(secondTeamCount) {
+			if util.UtilIntAbs(firstTeamCount) > util.UtilIntAbs(secondTeamCount) {
 				if firstTeamCount > 0 {
 					cached := fixture.homeTeam
 					fixture.homeTeam = fixture.awayTeam
@@ -180,7 +180,7 @@ func (r *Round) Print() {
 	}
 }
 
-func (s *Schedule) Print() {
+func (s *Schedule) Print(enableTerminalColors bool) {
 	for i, round := range s.rounds {
 		fmt.Printf("Round [%d]\n", i+1)
 		round.Print()

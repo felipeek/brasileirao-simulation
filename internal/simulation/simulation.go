@@ -11,7 +11,7 @@ import (
 	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
-func Simulate(nonInteractive bool, gptApiKey string) {
+func Simulate(nonInteractive bool, gptApiKey string, enableTerminalColors bool) {
 	rand.Seed(time.Now().UnixNano())
 
 	err := TeamsLoad()
@@ -27,9 +27,9 @@ func Simulate(nonInteractive bool, gptApiKey string) {
 	}
 
 	if nonInteractive {
-		err = PlayAllFixturesNonInteractive(&schedule)
+		err = PlayAllFixturesNonInteractive(&schedule, enableTerminalColors)
 	} else {
-		err = PlayAllFixturesIteractive(&schedule, gptApiKey)
+		err = PlayAllFixturesIteractive(&schedule, gptApiKey, enableTerminalColors)
 	}
 
 	if err != nil {
@@ -38,15 +38,18 @@ func Simulate(nonInteractive bool, gptApiKey string) {
 	}
 }
 
-func PlayAllFixturesNonInteractive(s *Schedule) error {
+func PlayAllFixturesNonInteractive(s *Schedule, enableTerminalColors bool) error {
 	err := s.PlayAllFixtures()
 	if err != nil {
 		return err
 	}
-	s.Print()
+	s.Print(enableTerminalColors)
 
 	standings := GenerateStandings(s)
-	standings.Print()
+	err = standings.Print(enableTerminalColors)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println()
 	fmt.Printf("##################################################################\n")
@@ -56,7 +59,7 @@ func PlayAllFixturesNonInteractive(s *Schedule) error {
 	return nil
 }
 
-func PlayAllFixturesIteractive(s *Schedule, gptApiKey string) error {
+func PlayAllFixturesIteractive(s *Schedule, gptApiKey string, enableTerminalColors bool) error {
 	fmt.Println("Press [ENTER] to play the next round.")
 
 	for !s.finished {
@@ -69,7 +72,10 @@ func PlayAllFixturesIteractive(s *Schedule, gptApiKey string) error {
 		s.PrintLastPlayedRound()
 
 		standings := GenerateStandings(s)
-		standings.Print()
+		err = standings.Print(enableTerminalColors)
+		if err != nil {
+			return err
+		}
 
 		if s.finished {
 			fmt.Println()

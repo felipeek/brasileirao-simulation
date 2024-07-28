@@ -19,7 +19,7 @@ func UtilReadFile(filePath string) ([]byte, error) {
 	return io.ReadAll(file)
 }
 
-func UtilInt64Abs(x int64) int64 {
+func UtilIntAbs(x int) int {
 	if x < 0 {
 		return -x
 	}

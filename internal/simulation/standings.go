@@ -154,11 +154,17 @@ func summedH2HResults(s *Schedule, team1Name string, team2Name string) (int, int
 }
 
 func (s *Standings) Print(enableTerminalColors bool) error {
-	headerFormat := "%-6s %-20s %-8s %-6s %-6s %-6s %-6s %-9s %-12s %-9s %-12s %-6s\n"
-	fmt.Printf(headerFormat, "Rank", "Team", "Matches", "Points", "Won", "Drawn", "Lost", "GoalsFor", "GoalsAgainst", "GoalsDiff", "RecentForm", "Change")
+	headerFormat := "%-6s %-20s %-8s %-6s %-6s %-6s %-6s %-9s %-12s %-9s %-12s %-6s %-6s %-6s\n"
+	fmt.Printf(headerFormat, "Rank", "Team", "Matches", "Points", "Won", "Drawn", "Lost",
+		"GoalsFor", "GoalsAgainst", "GoalsDiff", "RecentForm", "Change", "Morale", "PhysCond")
 
 	for i, teamStatistics := range s.TeamStatistics {
 		team := TeamsGetWithName(teamStatistics.Name)
+		teamRecentFiveGoalDiffs := getTeamRecentFiveGoalDiffs(teamStatistics.Name, team.DynamicAttributes.LastFixtures)
+		teamPositionChange, err := getTeamPositionChange(teamStatistics.Name, s.TeamStatistics, s.PreviousTeamStatistics)
+		if err != nil {
+			return err
+		}
 
 		printStandingsRank(enableTerminalColors, i+1)
 		fmt.Printf(" ")
@@ -180,13 +186,13 @@ func (s *Standings) Print(enableTerminalColors bool) error {
 		fmt.Printf(" ")
 		printStandingsGoalsDiff(enableTerminalColors, teamStatistics.GoalsDiff)
 		fmt.Printf(" ")
-		printStandingsRecentForm(enableTerminalColors, teamStatistics.Name, team.DynamicAttributes.LastFixtures)
+		printStandingsRecentForm(enableTerminalColors, teamRecentFiveGoalDiffs)
 		fmt.Printf(" ")
-		teamPositionChange, err := getTeamPositionChange(teamStatistics.Name, s.TeamStatistics, s.PreviousTeamStatistics)
-		if err != nil {
-			return err
-		}
 		printStandingsChanges(enableTerminalColors, teamPositionChange)
+		fmt.Printf(" ")
+		printStandingsMorale(enableTerminalColors, team.DynamicAttributes.Morale)
+		fmt.Printf(" ")
+		printStandingsPhysicalCondition(enableTerminalColors, team.DynamicAttributes.PhysicalCondition)
 		fmt.Println()
 	}
 
@@ -283,27 +289,43 @@ func printStandingsGoalsDiff(enableTerminalColors bool, goalsDiff int) {
 	}
 }
 
-func printStandingsRecentForm(enableTerminalColors bool, teamName string, recentMatches []*Fixture) {
+func getTeamRecentFiveGoalDiffs(teamName string, recentMatches []*Fixture) [5]*int {
+	var result [5]*int
+
+	currentPosition := 0
+	for i := 4; i >= 0; i-- {
+		if i >= len(recentMatches) {
+			result[currentPosition] = nil
+			currentPosition += 1
+			continue
+		}
+
+		fixture := recentMatches[i]
+		goalDiff := fixture.homeTeamScore - fixture.awayTeamScore
+		if teamName == fixture.awayTeam {
+			goalDiff = -goalDiff
+		}
+		result[currentPosition] = &goalDiff
+		currentPosition += 1
+	}
+
+	return result
+}
+
+func printStandingsRecentForm(enableTerminalColors bool, lastFiveGoalDiffs [5]*int) {
 	matchChar := "● "
 	noMatchChar := "─ "
 	if !enableTerminalColors {
 		for i := 0; i < 5; i++ {
-			fmt.Print(matchChar)
+			fmt.Print(noMatchChar)
 		}
 	} else {
-		for i := 4; i >= 0; i-- {
-			if i >= len(recentMatches) {
+		for _, goalDiff := range lastFiveGoalDiffs {
+			if goalDiff == nil {
 				ansi.Printf(ansi.BoldWhite, noMatchChar)
-				continue
-			}
-			fixture := recentMatches[i]
-			goalDiff := fixture.homeTeamScore - fixture.awayTeamScore
-			if teamName == fixture.awayTeam {
-				goalDiff = -goalDiff
-			}
-			if goalDiff > 0 {
+			} else if *goalDiff > 0 {
 				ansi.Printf(ansi.BoldGreen, matchChar)
-			} else if goalDiff < 0 {
+			} else if *goalDiff < 0 {
 				ansi.Printf(ansi.BoldRed, matchChar)
 			} else {
 				ansi.Printf(ansi.BoldWhite, matchChar)
@@ -377,5 +399,33 @@ func getRankPrintColor(rank int) ansi.AnsiColor {
 		return ansi.BoldWhite
 	} else {
 		return ansi.BoldRed
+	}
+}
+
+func getAttributeValuePrintColor(attributeValue float64) ansi.AnsiColor {
+	if attributeValue <= 3 {
+		return ansi.BoldRed
+	} else if attributeValue <= 7 {
+		return ansi.BoldWhite
+	} else {
+		return ansi.BoldGreen
+	}
+}
+
+func printStandingsMorale(enableTerminalColors bool, moraleValue float64) {
+	format := "%6.2f"
+	if !enableTerminalColors {
+		fmt.Printf(format, moraleValue)
+	} else {
+		ansi.Printf(getAttributeValuePrintColor(moraleValue), format, moraleValue)
+	}
+}
+
+func printStandingsPhysicalCondition(enableTerminalColors bool, physicalCondition float64) {
+	format := "%6.2f"
+	if !enableTerminalColors {
+		fmt.Printf(format, physicalCondition)
+	} else {
+		ansi.Printf(getAttributeValuePrintColor(physicalCondition), format, physicalCondition)
 	}
 }

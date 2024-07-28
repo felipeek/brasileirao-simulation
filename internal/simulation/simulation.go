@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/felipeek/brasileirao-simulation/internal/gpt"
 	"github.com/felipeek/brasileirao-simulation/internal/util"
 )
 
@@ -103,6 +104,16 @@ func PlayAllFixturesIteractive(s *Schedule, gptApiKey string, enableTerminalColo
 				signal = '-'
 			}
 			fmt.Printf("\t- Effect: %s's %s: %c%.2f\n\n", teamName, attributeType, signal, math.Abs(diff))
+
+			// TODO: refactor this logic of sharing the existing attributes between simulation and gpt, this is currently messy
+			// also add functions to increment/decrement these attributes as part of Team, and clamp there
+			if attributeType == gpt.MORALE_ATTRIBUTE.Name {
+				randomTeam.DynamicAttributes.Morale += diff
+				randomTeam.DynamicAttributes.Morale = util.UtilClamp(randomTeam.DynamicAttributes.Morale, 0, 10)
+			} else if attributeType == gpt.PHYSICAL_CONDITION_ATTRIBUTE.Name {
+				randomTeam.DynamicAttributes.PhysicalCondition += diff
+				randomTeam.DynamicAttributes.PhysicalCondition = util.UtilClamp(randomTeam.DynamicAttributes.PhysicalCondition, 0, 10)
+			}
 		}
 	}
 

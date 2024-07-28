@@ -13,7 +13,7 @@ func main() {
 
 	nonInteractive := flag.Bool("non-interactive", false, "Run in non-interactive mode")
 	gptApiKey := flag.String("gpt-api-key", "", "GPT API Key")
-	enableTerminalColors := flag.Bool("enable-terminal-colors", false, "Enable colors in the terminal output")
+	enableTerminalColors := flag.Bool("enable-terminal-colors", true, "Enable colors in the terminal output")
 
 	flag.Parse()
 

@@ -32,7 +32,7 @@ const (
 	// The bigger the value, the bigger the potential morale update values
 	MORALE_UPDATE_STDDEV = 0.2
 	// The bigger the value, the bigger the potential physical condition update values
-	PHYSICAL_CONDITION_UPDATE_STDDEV = 0.2
+	PHYSICAL_CONDITION_UPDATE_STDDEV = 0.3
 )
 
 var teams map[string]*Team = make(map[string]*Team)

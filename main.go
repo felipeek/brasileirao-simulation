@@ -13,9 +13,9 @@ func main() {
 
 	nonInteractive := flag.Bool("non-interactive", false, "Run in non-interactive mode")
 	gptApiKey := flag.String("gpt-api-key", "", "GPT API Key")
-	enableTerminalColors := flag.Bool("enable-terminal-colors", true, "Enable colors in the terminal output")
+	disableTerminalColors := flag.Bool("disable-terminal-colors", false, "Disable colors in the terminal output")
 
 	flag.Parse()
 
-	simulation.Simulate(*nonInteractive, *gptApiKey, *enableTerminalColors)
+	simulation.Simulate(*nonInteractive, *gptApiKey, !*disableTerminalColors)
 }

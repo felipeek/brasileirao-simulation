@@ -15,7 +15,7 @@ type Fixture struct {
 }
 
 const (
-	LOG_ADJUST_FACTOR                      = 0.5 // the smaller, the more 'balanced' the results
+	LOG_ADJUST_FACTOR                      = 0.3 // the smaller, the more 'balanced' the results
 	HOME_BONUS_FACTOR                      = 2.0
 	RECENT_FORM_CONTRIBUTION_IMPACT        = 0.08
 	MORALE_CONTRIBUTION_IMPACT             = 0.05

@@ -56,7 +56,7 @@ func teamsLoad() error {
 
 	for _, dirEntry := range files {
 		filePath := TEAMS_PATH + dirEntry.Name()
-		raw, err := util.UtilReadFile(filePath)
+		raw, err := util.ReadFile(filePath)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to open team [%s]: %v\n", filePath, err)
@@ -116,7 +116,8 @@ func teamsGetDynamicAttributeMetadata() []AttributeType {
 
 func (t *Team) generateGptBasedRandomEvent(gptApiKey string) (string, error) {
 	dynamicAttributesMetadatas := teamsGetDynamicAttributeMetadata()
-	attributeType := util.UtilRandomChoice(dynamicAttributesMetadatas).(AttributeType)
+	randomPos := util.RandomInt(len(dynamicAttributesMetadatas))
+	attributeType := dynamicAttributesMetadatas[randomPos]
 	valueDiff := util.RandomValueFromNormalDistribution(0.0, 4.0)
 
 	err := t.changeDynamicAttribute(attributeType, valueDiff)
@@ -130,7 +131,7 @@ func (t *Team) generateGptBasedRandomEvent(gptApiKey string) (string, error) {
 	if valueDiff < 0 {
 		signal = '-'
 	}
-	fullMsg := msg + fmt.Sprintf("\n\t- Effect: %s's %s: %c%.2f", t.Name, attributeType, signal, math.Abs(valueDiff))
+	fullMsg := msg + fmt.Sprintf("\n\t- Effect: %s's %s: %c%.2f", t.Name, attributeType.Name, signal, math.Abs(valueDiff))
 	return fullMsg, err
 }
 
@@ -147,12 +148,12 @@ func (t *Team) changeDynamicAttribute(attributeType AttributeType, valueDiff flo
 
 func (t *Team) changeMorale(moraleDiff float64) {
 	t.DynamicAttributes.Morale += moraleDiff
-	t.DynamicAttributes.Morale = util.UtilClamp(t.DynamicAttributes.Morale, 0, 10)
+	t.DynamicAttributes.Morale = util.Clamp(t.DynamicAttributes.Morale, 0, 10)
 }
 
 func (t *Team) changePhysicalCondition(physicalCondDiff float64) {
 	t.DynamicAttributes.PhysicalCondition += physicalCondDiff
-	t.DynamicAttributes.PhysicalCondition = util.UtilClamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
+	t.DynamicAttributes.PhysicalCondition = util.Clamp(t.DynamicAttributes.PhysicalCondition, 0, 10)
 }
 
 func (t *Team) updateDynamicAttributes(playedFixture *Fixture) error {

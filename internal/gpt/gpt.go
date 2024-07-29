@@ -11,7 +11,7 @@ type messageCategory string
 const (
 	GPT_CONTEXT_MESSAGE = "You are being used in the simulation of Brazilian Soccer Championship (Brasileirao).\n" +
 		"You are being invoked after a tournament round and your job is to generate a random event that will:\n" +
-		"Impact the team [%s] by adding the value [%f] to the attribute [%s].\n" +
+		"Impact the team [%s] by adding the value [%c%f] to the attribute [%s].\n" +
 		"Attribute description: [%s]\n" +
 		"If the received value is POSITIVE, the event MUST BE POSITIVE, otherwise it MUST BE NEGATIVE.\n" +
 		"The category of the message is [%s]. (Do not explicitly mention the category in the response)\n" +
@@ -29,8 +29,13 @@ const (
 )
 
 func GptRetrieveMessage(apiKey string, teamName string, attributeName string, attributeDescription string, valueDiff float64) (string, error) {
-	messageCategory := util.UtilRandomChoice(MESSAGE_CATEGORY_CONTROVERSIAL, MESSAGE_CATEGORY_FUNNY, MESSAGE_CATEGORY_INJURY).(messageCategory)
-	fullMessage := fmt.Sprintf(GPT_CONTEXT_MESSAGE, teamName, valueDiff, attributeName, attributeDescription, messageCategory)
+	messageCategory := util.RandomChoice(MESSAGE_CATEGORY_CONTROVERSIAL, MESSAGE_CATEGORY_FUNNY, MESSAGE_CATEGORY_INJURY).(messageCategory)
+
+	signal := '+'
+	if valueDiff < 0 {
+		signal = '-'
+	}
+	fullMessage := fmt.Sprintf(GPT_CONTEXT_MESSAGE, teamName, signal, valueDiff, attributeName, attributeDescription, messageCategory)
 	gptMessage, err := GptApiCall(apiKey, fullMessage)
 
 	return gptMessage, err

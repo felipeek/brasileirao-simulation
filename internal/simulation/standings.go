@@ -321,7 +321,7 @@ func printStandingsChanges(enableTerminalColors bool, teamPositionChange int) {
 		if teamPositionChange > 0 {
 			fmt.Printf(format, upChar, teamPositionChange)
 		} else if teamPositionChange < 0 {
-			fmt.Printf(format, downChar, util.UtilIntAbs(teamPositionChange))
+			fmt.Printf(format, downChar, util.IntAbs(teamPositionChange))
 		} else {
 			fmt.Printf(format, noChangeChar, teamPositionChange)
 		}
@@ -329,7 +329,7 @@ func printStandingsChanges(enableTerminalColors bool, teamPositionChange int) {
 		if teamPositionChange > 0 {
 			ansi.Printf(ansi.BoldGreen, format, upChar, teamPositionChange)
 		} else if teamPositionChange < 0 {
-			ansi.Printf(ansi.BoldRed, format, downChar, util.UtilIntAbs(teamPositionChange))
+			ansi.Printf(ansi.BoldRed, format, downChar, util.IntAbs(teamPositionChange))
 		} else {
 			ansi.Printf(ansi.BoldWhite, format, noChangeChar, teamPositionChange)
 		}

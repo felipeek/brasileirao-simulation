@@ -84,7 +84,7 @@ func generateSchedule(teams map[string]*Team) (Schedule, error) {
 			firstTeamCount := homeAwayCountMap[fixture.homeTeam]
 			secondTeamCount := homeAwayCountMap[fixture.awayTeam]
 
-			if util.UtilIntAbs(firstTeamCount) > util.UtilIntAbs(secondTeamCount) {
+			if util.IntAbs(firstTeamCount) > util.IntAbs(secondTeamCount) {
 				if firstTeamCount > 0 {
 					cached := fixture.homeTeam
 					fixture.homeTeam = fixture.awayTeam

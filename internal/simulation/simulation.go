@@ -78,7 +78,8 @@ func playAllFixturesIteractive(s *Schedule, gptApiKey string, enableTerminalColo
 			reader.ReadString('\n')
 
 			teamsNames := teamsGetAllNames()
-			teamName := util.UtilRandomChoiceStr(teamsNames...).(string)
+			randomPos := util.RandomInt(len(teamsNames))
+			teamName := teamsNames[randomPos]
 			randomTeam := teamsGetWithName(teamName)
 			eventStr, err := randomTeam.generateGptBasedRandomEvent(gptApiKey)
 			if err != nil {

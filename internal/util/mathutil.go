@@ -32,11 +32,16 @@ func PoissonKnuth(lambda float64) int {
 	return k - 1
 }
 
-func AttenuateStrength(x, logAdjustFactor float64) float64 {
-	if x <= 0 {
-		return 0
-	}
-	return math.Log(1 + logAdjustFactor*x)
+func AttenuateStrength(strength float64) float64 {
+	// the bigger this number, the more the curve will be 'flatten', making it less steep
+	// this means that the strength will have less influence and the output will be more balanced
+	flattenFactor := 3.0
+
+	// the adjuster serves as a simple linear operation to adjust the output average
+	// i.e., assuming strength == 1 (which is a good pick since this is independent from the flattenFactor),
+	// then the result will be strength * adjuster
+	adjuster := 0.666
+	return math.Pow(strength, 1.0/flattenFactor) * adjuster
 }
 
 // Given a contribution C in [0,10] and an impact I on the overall simulation, finds a multiplier M

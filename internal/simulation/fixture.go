@@ -15,7 +15,6 @@ type Fixture struct {
 }
 
 const (
-	LOG_ADJUST_FACTOR                      = 0.3 // the smaller, the more 'balanced' the results
 	HOME_BONUS_FACTOR                      = 2.0
 	RECENT_FORM_CONTRIBUTION_IMPACT        = 0.08
 	MORALE_CONTRIBUTION_IMPACT             = 0.05
@@ -70,21 +69,15 @@ func (f *Fixture) play() error {
 	awayStrength := awayTeamFormContribution * awayTeamMoraleContribution * awayTeamPhysicalConditionContribution * awayRawStrength
 
 	// Attenuate strengths by employing a log-based function
-	homeLambda := util.AttenuateStrength(homeStrength, LOG_ADJUST_FACTOR)
-	awayLambda := util.AttenuateStrength(awayStrength, LOG_ADJUST_FACTOR)
+	homeLambda := util.AttenuateStrength(homeStrength)
+	awayLambda := util.AttenuateStrength(awayStrength)
 
 	// Generate final scores based on a poisson distribution
 	f.homeTeamScore = util.PoissonKnuth(homeLambda)
 	f.awayTeamScore = util.PoissonKnuth(awayLambda)
 
-	//fmt.Printf("%s: %f \n", f.homeTeam, homeTeamFormContribution)
-	//fmt.Printf("%s: %f \n\n", f.awayTeam, awayTeamFormContribution)
-	//fmt.Printf("%s: %f \n", f.homeTeam, homeTeamMoraleContribution)
-	//fmt.Printf("%s: %f \n\n", f.awayTeam, awayTeamMoraleContribution)
-	//fmt.Printf("%s: %f \n", f.homeTeam, homeTeamPhysicalConditionContribution)
-	//fmt.Printf("%s: %f \n\n", f.awayTeam, awayTeamPhysicalConditionContribution)
-	//fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeLambda, homeLambda)
-	//fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayLambda, awayLambda)
+	//fmt.Printf("%s: %f -> %f\n", f.homeTeam, homeStrength, homeLambda)
+	//fmt.Printf("%s: %f -> %f\n\n", f.awayTeam, awayStrength, awayLambda)
 
 	f.played = true
 
